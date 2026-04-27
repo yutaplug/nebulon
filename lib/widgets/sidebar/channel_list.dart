@@ -138,6 +138,7 @@ class ChannelTile extends ConsumerWidget {
         selectedChannelNotifier.state = channel;
         Scaffold.of(context).closeDrawer();
       },
+      mouseCursor: SystemMouseCursors.basic,
       dense: true,
       titleTextStyle: Theme.of(context).textTheme.bodyMedium,
       minTileHeight: 32,

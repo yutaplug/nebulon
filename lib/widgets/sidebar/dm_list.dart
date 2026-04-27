@@ -20,6 +20,7 @@ class DMList extends ConsumerWidget {
           minVerticalPadding: 16,
           minLeadingWidth: 48,
           selected: ref.watch(selectedChannelProvider) == channel,
+          mouseCursor: SystemMouseCursors.basic,
           selectedTileColor:
               Theme.of(context).colorScheme.surfaceContainerHighest,
           leading: CircleAvatar(
