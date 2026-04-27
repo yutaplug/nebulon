@@ -18,17 +18,18 @@ ImageProvider cdnImage(
       // Other valid sizes too (peak poetry)
       20, 22, 24, 28, 40, 44, 48, 56, 60, 80, 96, 100,
       160, 240, 300, 320, 480, 600, 640, 1280, 1536, 3072,
-    ];
+    ]..sort();
 
-    // Search for closest valid size, but prefer larger sizes
-    int closest = validSizes.reduce((a, b) {
-      int diffA = (a - scaledSize).abs();
-      int diffB = (b - scaledSize).abs();
-      if (diffA == diffB) return a > b ? a : b;
-      return diffA < diffB ? a : b;
-    });
-
-    finalSize = closest;
+    if(scaledSize > validSizes.last){
+      finalSize = validSizes.last;
+    } else {
+       for (final int validSize in validSizes) {
+        if (validSize >= scaledSize){
+          finalSize = validSize;
+          break;
+        }
+      }
+    }
   }
 
   Uri uri = Uri.parse(path);
