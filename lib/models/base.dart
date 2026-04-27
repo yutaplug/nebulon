@@ -99,7 +99,6 @@ class CacheRegistry<T extends CacheableResource> {
   }
 }
 
-// TODO: use Globalcache for all cacheable resources
 class GlobalCache {
   static final Map<Type, Map<Snowflake, Resource>> _cache = {};
 

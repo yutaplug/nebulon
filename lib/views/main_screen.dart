@@ -39,7 +39,7 @@ class ViewBody extends ConsumerWidget {
       [
         "Nebulon",
         if (kDebugMode) "Debug",
-        if (title != null) title,
+        ?title,
       ].join(" | "),
     );
 

@@ -59,12 +59,7 @@ class SidebarMenuState extends ConsumerState<SidebarMenu>
                                           : "Direct Messages",
                                       style: Theme.of(
                                         context,
-                                      ).textTheme.titleMedium!.copyWith(
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.onSecondaryContainer,
-                                      ),
+                                      ).textTheme.titleMedium!,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),

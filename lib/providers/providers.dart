@@ -5,6 +5,7 @@ import 'package:nebulon/models/guild.dart';
 import 'package:nebulon/models/user.dart';
 import 'package:nebulon/services/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 class ApiServiceNotifier extends StateNotifier<AsyncValue<ApiService>> {
   ApiServiceNotifier(this.ref) : super(AsyncValue.loading());
@@ -53,7 +54,7 @@ class SelectedGuildProvider extends StateNotifier<GuildModel?> {
   void set(GuildModel? newGuild) {
     state = newGuild;
     if (newGuild != null) {
-      ref.read(apiServiceProvider).valueOrNull?.subscribeToGuild(newGuild.id);
+      ref.read(apiServiceProvider).value?.subscribeToGuild(newGuild.id);
     }
   }
 }

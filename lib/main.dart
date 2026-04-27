@@ -88,7 +88,6 @@ class MyApp extends ConsumerWidget {
             case ConnectionState.done:
               if (snapshot.hasData && snapshot.data != null) {
                 if (ref.read(apiServiceProvider).isLoading) {
-                  // delay this a little to not change state during widget lifecycle
                   Future(
                     () => ref
                         .read(apiServiceProvider.notifier)

@@ -119,12 +119,12 @@ class _SidebarItemState extends ConsumerState<SidebarItem> {
       onExit: (_) {
         setState(() => _isHovered = false);
       },
-      cursor: SystemMouseCursors.click,
       child: InkWell(
         enableFeedback: false,
         onHover: (state) => setState(() => _isHovered = state),
         onFocusChange: (state) => setState(() => _isHovered = state),
         onTap: widget.onTap,
+        // mouseCursor: SystemMouseCursors.click,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
@@ -150,11 +150,17 @@ class _SidebarItemState extends ConsumerState<SidebarItem> {
       ),
     );
 
+   
+
     return Stack(
       alignment: Alignment.center,
       children: [
         widget.text != null
-            ? Tooltip(message: widget.text, child: button)
+            ? Tooltip(
+                message: widget.text,
+                positionDelegate: (context) => context.target + Offset(context.targetSize.width / 2 + 8, -context.tooltipSize.height/2),
+                child: button
+            )
             : button,
         Positioned(
           left: 0,
@@ -163,12 +169,9 @@ class _SidebarItemState extends ConsumerState<SidebarItem> {
             curve: Curves.easeInOut,
             width: widget.isSelected || _isHovered || widget.hasDot ? 4 : 0,
             height:
-                widget.isSelected
-                    ? 40
-                    : _isHovered
-                    ? 20
-                    : widget.hasDot
-                    ? 8
+                widget.isSelected   ? 40
+                    : _isHovered    ? 20
+                    : widget.hasDot ? 8
                     : 0,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.onSurface,

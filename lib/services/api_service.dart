@@ -1,18 +1,20 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:nebulon/models/base.dart';
 import 'package:nebulon/models/channel.dart';
 import 'package:nebulon/models/guild.dart';
-
 import 'package:nebulon/models/message.dart';
 import 'package:nebulon/models/user.dart';
-import 'package:nebulon/providers/providers.dart';
-import 'package:nebulon/services/gateway_channel.dart';
 
+import 'package:nebulon/providers/providers.dart';
+
+import 'package:nebulon/services/gateway_channel.dart';
 import 'package:nebulon/services/interceptors/authorization_interceptor.dart';
 import 'package:nebulon/services/interceptors/ratelimit_interceptor.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 
 enum MessageEventType { create, update, delete }
 

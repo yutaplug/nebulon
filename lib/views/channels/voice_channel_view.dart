@@ -38,7 +38,7 @@ class VoiceChannelView extends StatelessWidget {
             spacing: 16,
             children: [
               Tooltip(
-                message: "Joining voice is not yet supported.",
+                message: "Joining voice chat is not yet supported.",
                 child: FilledButton.icon(
                   onPressed: null,
                   icon: const Icon(Icons.mic_none_rounded),
