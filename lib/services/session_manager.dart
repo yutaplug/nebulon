@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:nebulon/helpers/common.dart';
 import 'package:nebulon/models/user.dart';
 import 'package:nebulon/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,7 +48,7 @@ class SessionManager {
   }
 
   static Future<UserModel> getUserByToken(String token) async {
-    Map<String, dynamic> data;
+    Json data;
     try {
       final response = await Dio(
         DiscordAPIOptions,

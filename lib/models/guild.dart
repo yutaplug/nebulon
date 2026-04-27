@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:nebulon/helpers/common.dart';
 import 'package:nebulon/models/base.dart';
 import 'package:nebulon/models/channel.dart';
 import 'package:nebulon/models/user.dart';
@@ -28,7 +29,7 @@ class RoleModel {
 
   static RoleModel? getById(int id) => _cache[id];
 
-  factory RoleModel.fromJson(Map<String, dynamic> json) {
+  factory RoleModel.fromJson(Json json) {
     int id = int.parse(json["id"]);
     if (_cache.containsKey(id)) {
       return _cache[id]!;
@@ -72,7 +73,7 @@ class MemberModel {
   });
 
   @override
-  factory MemberModel.fromJson(Map<String, dynamic> json) {
+  factory MemberModel.fromJson(Json json) {
     return MemberModel(
       user: UserModel.fromJson(json["user"]),
       nickname: json["nick"],
@@ -102,7 +103,7 @@ class GuildModel extends Resource {
   });
 
   factory GuildModel.fromJson(
-    Map<String, dynamic> json, {
+    Json json, {
     ApiService? service,
   }) {
     return GuildModel(

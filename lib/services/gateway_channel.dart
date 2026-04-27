@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'package:nebulon/helpers/common.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class DispatchEvent {
@@ -9,7 +10,7 @@ class DispatchEvent {
 
   const DispatchEvent(this.type, this.data);
 
-  factory DispatchEvent.fromPayload(Map<String, dynamic> payload) {
+  factory DispatchEvent.fromPayload(Json payload) {
     if (payload["op"] != 0) {
       throw Exception("Payload wasn't a dispatch event (expected OP-code 0)");
     }
@@ -20,7 +21,7 @@ class DispatchEvent {
 class GatewayChannel {
   late WebSocketChannel _channel;
 
-  void send(Map<String, dynamic> data) {
+  void send(Json data) {
     _channel.sink.add(jsonEncode(data));
   }
 
@@ -130,7 +131,7 @@ class GatewayChannel {
   }
 
   void _lifeCycleHandler(String event) async {
-    final Map<String, dynamic> payload = jsonDecode(event);
+    final Json payload = jsonDecode(event);
     switch (payload["op"]) {
       case 0: // Dispatch
         _lastSequence = payload["s"] ?? _lastSequence;

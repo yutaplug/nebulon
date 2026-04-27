@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:nebulon/helpers/common.dart';
 import 'package:nebulon/models/base.dart';
 import 'package:nebulon/models/message.dart';
 import 'package:flutter/material.dart';
@@ -143,7 +144,7 @@ class ChannelModel extends CacheableResource {
   static ChannelModel? getById(int id) => _cache.getById(Snowflake(id));
 
   factory ChannelModel.fromJson(
-    Map<String, dynamic> json, {
+    Json json, {
     ApiService? service,
   }) {
     return ChannelModel(

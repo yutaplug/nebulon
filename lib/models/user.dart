@@ -1,3 +1,4 @@
+import 'package:nebulon/helpers/common.dart';
 import 'package:nebulon/models/base.dart';
 import 'package:nebulon/services/api_service.dart';
 
@@ -39,7 +40,7 @@ class UserModel extends CacheableResource {
   static final CacheRegistry<UserModel> _cache = CacheRegistry();
 
   @override
-  factory UserModel.fromJson(Map<String, dynamic> json) {
+  factory UserModel.fromJson(Json json) {
     return UserModel(
       id: Snowflake(json["id"]),
       username: json["username"],

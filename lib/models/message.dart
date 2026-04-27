@@ -1,3 +1,4 @@
+import 'package:nebulon/helpers/common.dart';
 import 'package:nebulon/models/base.dart';
 import 'package:nebulon/models/user.dart';
 
@@ -46,7 +47,7 @@ class MessageModel extends Resource {
   String? nonce; // used to determine which message this was while pending
 
   @override
-  factory MessageModel.fromJson(Map<String, dynamic> json) {
+  factory MessageModel.fromJson(Json json) {
     return MessageModel(
       id: Snowflake(json["id"]),
       type: MessageType.getByValue(json["type"]),
