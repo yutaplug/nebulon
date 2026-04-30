@@ -104,6 +104,38 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (widget.message.reference != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              Icon(Icons.reply, size: 16, color: Theme.of(context).hintColor),
+                              const SizedBox(width: 4),
+                              UserAvatar(user: widget.message.reference!.author, size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                "@${widget.message.reference!.author.displayName}",
+                                style: TextStyle(
+                                  color: Theme.of(context).hintColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  widget.message.reference!.content,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Theme.of(context).hintColor,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       Visibility(
                         visible: widget.showHeader,
                         child: Row(
