@@ -32,12 +32,6 @@ class _TextChannelViewState extends ConsumerState<TextChannelView> {
   late ApiService _api;
   late final StreamSubscription _typingStreamSubscription;
   late final StreamSubscription _messageStreamSubscription;
-  final GlobalKey _textFieldKey = GlobalKey();
-
-  void _handleReply(MessageModel message) {
-    final textFieldState = ChannelTextField.of(context);
-    textFieldState?.setReply(message);
-  }
 
   @override
   void initState() {
@@ -234,7 +228,6 @@ class _TextChannelViewState extends ConsumerState<TextChannelView> {
                     key: ValueKey(message.id),
                     message: message,
                     showHeader: showMessageHeader,
-                    onReply: _handleReply,
                   );
 
                   if (showDayDivider) {
@@ -265,7 +258,6 @@ class _TextChannelViewState extends ConsumerState<TextChannelView> {
           ),
         ),
         ChannelTextField(
-          key: _textFieldKey,
           channel: widget.channel,
           onMessageSubmit: (message) {
             setState(() => _pendingMessages.insert(0, message));

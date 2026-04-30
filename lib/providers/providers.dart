@@ -66,6 +66,8 @@ final selectedGuildProvider =
 
 final selectedChannelProvider = StateProvider<ChannelModel?>((ref) => null);
 
+final replyMessageProvider = StateProvider<MessageModel?>((ref) => null);
+
 final hasDrawerProvider = StateProvider<bool>((ref) => false);
 final sidebarWidthProvider = StateProvider<double>((ref) => 320);
 final sidebarCollapsedProvider = StateProvider<bool>((ref) => false);

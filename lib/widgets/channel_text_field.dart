@@ -23,16 +23,11 @@ class ChannelTextField extends ConsumerStatefulWidget {
   final Function(MessageModel)? onMessageSent;
   final Function(Object)? onError;
 
-  // Expose the setReply method for external access
-  static ChannelTextFieldState? of(BuildContext context) {
-    return context.findAncestorStateOfType<ChannelTextFieldState>();
-  }
-
   @override
-  ConsumerState<ChannelTextField> createState() => ChannelTextFieldState();
+  ConsumerState<ChannelTextField> createState() => _ChannelTextFieldState();
 }
 
-class ChannelTextFieldState extends ConsumerState<ChannelTextField> {
+class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
   final TextEditingController _inputController = TextEditingController();
   late final FocusNode _inputFocusNode;
 
@@ -40,7 +35,6 @@ class ChannelTextFieldState extends ConsumerState<ChannelTextField> {
 
   bool _isTyping = false;
   Timer? _resetTypingTimer;
-  MessageModel? _replyingTo;
 
   @override
   void initState() {
@@ -67,6 +61,7 @@ class ChannelTextFieldState extends ConsumerState<ChannelTextField> {
     final text = _inputController.text.trim();
     if (text.isNotEmpty && text.length < 2000) {
       final nonce = _api.getNextNonce();
+      final replyMessage = ref.read(replyMessageProvider);
       final pendingMessage = MessageModel(
         id: Snowflake.fromDate(DateTime.now()),
         author: ref.read(connectedUserProvider)!,
@@ -75,17 +70,18 @@ class ChannelTextFieldState extends ConsumerState<ChannelTextField> {
         timestamp: DateTime.now(),
         isPending: true,
         nonce: nonce,
-        reference: _replyingTo,
-        type: _replyingTo != null ? MessageType.reply : MessageType.normal,
       );
       _inputController.clear();
-      setState(() => _replyingTo = null);
       widget.onMessageSubmit?.call(pendingMessage);
 
       try {
-        final message = _replyingTo != null
-            ? await _api.sendReply(widget.channel.id, text, nonce, _replyingTo!.id)
-            : await _api.sendMessage(widget.channel.id, text, nonce);
+        final message = await _api.sendMessage(
+          widget.channel.id,
+          text,
+          nonce,
+          replyToMessageId: replyMessage?.id,
+        );
+        ref.read(replyMessageProvider.notifier).state = null;
         widget.onMessageSent?.call(message);
       } catch (error) {
         pendingMessage.hasError = true;
@@ -109,11 +105,6 @@ class ChannelTextFieldState extends ConsumerState<ChannelTextField> {
     }
   }
 
-  void setReply(MessageModel message) {
-    setState(() => _replyingTo = message);
-    _inputFocusNode.requestFocus();
-  }
-
   void _typing() {
     if (_isTyping) return;
     _isTyping = true;
@@ -131,52 +122,55 @@ class ChannelTextFieldState extends ConsumerState<ChannelTextField> {
   @override
   Widget build(BuildContext context) {
     final screenPadding = MediaQuery.paddingOf(context);
+    final replyMessage = ref.watch(replyMessageProvider);
 
     return ColoredBox(
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
-      child: Column(
-        children: [
-          if (_replyingTo != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainer,
-                border: Border(
-                  left: BorderSide(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 3,
-                  ),
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: screenPadding.bottom,
+          right: screenPadding.right,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (replyMessage != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.reply,
+                      size: 16,
+                      color: Theme.of(context).hintColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Replying to ${replyMessage.author.displayName}",
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: Theme.of(context).hintColor,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 16),
+                      onPressed: () {
+                        ref.read(replyMessageProvider.notifier).state = null;
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                children: [
-                  Icon(Icons.reply, size: 16, color: Theme.of(context).colorScheme.primary),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Replying to ${_replyingTo!.author.displayName}",
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => setState(() => _replyingTo = null),
-                    icon: Icon(Icons.close, size: 16),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
-              ),
-            ),
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: screenPadding.bottom,
-              right: screenPadding.right,
-            ),
-            child: Row(
+            Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
@@ -209,8 +203,8 @@ class ChannelTextFieldState extends ConsumerState<ChannelTextField> {
                 IconButton(onPressed: _sendMessage, icon: const Icon(Icons.send)),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
