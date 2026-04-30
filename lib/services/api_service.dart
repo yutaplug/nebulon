@@ -138,14 +138,19 @@ class ApiService {
                 .map((channel) => ChannelModel.fromJson(channel, service: this))
                 .toList();
       case "MESSAGE_CREATE":
+        final channelId = Snowflake(data["channel_id"]);
         _messageEventController.add(
           MessageEvent(
             type: MessageEventType.create,
             messageId: Snowflake(data["id"]),
-            channelId: Snowflake(data["channel_id"]),
+            channelId: channelId,
             message: MessageModel.fromJson(data),
           ),
         );
+        final selectedChannel = _ref.read(selectedChannelProvider);
+        if (selectedChannel?.id != channelId) {
+          _ref.read(unreadChannelsProvider.notifier).markUnread(channelId.value);
+        }
         break;
       case "MESSAGE_UPDATE":
         _messageEventController.add(

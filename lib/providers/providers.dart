@@ -65,7 +65,56 @@ final selectedGuildProvider =
       (ref) => SelectedGuildProvider(ref),
     );
 
-final selectedChannelProvider = StateProvider<ChannelModel?>((ref) => null);
+class SelectedChannelProvider extends StateNotifier<ChannelModel?> {
+  SelectedChannelProvider(this.ref) : super(null);
+
+  final Ref ref;
+
+  void set(ChannelModel? newChannel) {
+    state = newChannel;
+    if (newChannel != null) {
+      ref.read(unreadChannelsProvider.notifier).markRead(newChannel.id.value);
+    }
+  }
+}
+
+final selectedChannelProvider =
+    StateNotifierProvider<SelectedChannelProvider, ChannelModel?>(
+      (ref) => SelectedChannelProvider(ref),
+    );
+
+class UnreadChannelsNotifier extends StateNotifier<Set<int>> {
+  UnreadChannelsNotifier() : super({});
+
+  void markUnread(int channelId) {
+    if (!state.contains(channelId)) {
+      state = {...state, channelId};
+    }
+  }
+
+  void markRead(int channelId) {
+    if (state.contains(channelId)) {
+      final newState = Set<int>.from(state);
+      newState.remove(channelId);
+      state = newState;
+    }
+  }
+}
+
+final unreadChannelsProvider = StateNotifierProvider<UnreadChannelsNotifier, Set<int>>((ref) => UnreadChannelsNotifier());
+
+final unreadGuildsProvider = Provider<Set<int>>((ref) {
+  final unreadChannels = ref.watch(unreadChannelsProvider);
+  
+  final unreadGuilds = <int>{};
+  for (final channelId in unreadChannels) {
+    final channel = ChannelModel.getById(channelId);
+    if (channel != null && channel.guildId != null) {
+      unreadGuilds.add(channel.guildId!);
+    }
+  }
+  return unreadGuilds;
+});
 
 final replyMessageProvider = StateProvider<MessageModel?>((ref) => null);
 

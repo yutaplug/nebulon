@@ -129,24 +129,45 @@ class ChannelTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bool isSelected = ref.watch(selectedChannelProvider) == channel;
     final selectedChannelNotifier = ref.read(selectedChannelProvider.notifier);
+    final isUnread = ref.watch(unreadChannelsProvider).contains(channel.id.value);
 
-    return ListTile(
-      title: Text(channel.displayName, overflow: TextOverflow.ellipsis),
-      leading: Icon(getChannelSymbol(channel.type)),
-      selected: isSelected,
-      onTap: () {
-        selectedChannelNotifier.state = channel;
-        Scaffold.of(context).closeDrawer();
-      },
-      mouseCursor: SystemMouseCursors.basic,
-      dense: true,
-      titleTextStyle: Theme.of(context).textTheme.bodyMedium,
-      minTileHeight: 32,
-      horizontalTitleGap: 8,
-      iconColor: Theme.of(context).colorScheme.onSurface.withAlpha(176),
-      textColor: Theme.of(context).colorScheme.onSurface.withAlpha(200),
-      selectedTileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      selectedColor: Theme.of(context).colorScheme.onSurface,
+    return Stack(
+      children: [
+        ListTile(
+          title: Text(channel.displayName, overflow: TextOverflow.ellipsis),
+          leading: Icon(getChannelSymbol(channel.type)),
+          selected: isSelected,
+          onTap: () {
+            selectedChannelNotifier.set(channel);
+            Scaffold.of(context).closeDrawer();
+          },
+          mouseCursor: SystemMouseCursors.basic,
+          dense: true,
+          titleTextStyle: isUnread ? Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold) : Theme.of(context).textTheme.bodyMedium,
+          minTileHeight: 32,
+          horizontalTitleGap: 8,
+          iconColor: isUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withAlpha(176),
+          textColor: isUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withAlpha(200),
+          selectedTileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          selectedColor: Theme.of(context).colorScheme.onSurface,
+        ),
+        if (isUnread && !isSelected)
+          Positioned(
+            left: 0,
+            top: 12, // (32 minTileHeight - 8 height) / 2
+            child: Container(
+              width: 4,
+              height: 8,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.onSurface,
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(4),
+                  bottomRight: Radius.circular(4),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

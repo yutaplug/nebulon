@@ -9,6 +9,8 @@ import 'package:intl/intl.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nebulon/providers/providers.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MessageWidget extends ConsumerStatefulWidget {
   final MessageModel message;
@@ -167,8 +169,14 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                       ),
                       if (!(widget.message.attachments.isNotEmpty &&
                           widget.message.content.isEmpty))
-                        SelectableText(
-                          widget.message.content,
+                        SelectableLinkify(
+                          text: widget.message.content,
+                          onOpen: (link) async {
+                            if (!await launchUrl(Uri.parse(link.url))) {
+                              // Could not launch URL
+                            }
+                          },
+                          options: const LinkifyOptions(humanize: false),
                           focusNode: FocusNode(canRequestFocus: false),
                           style: Theme.of(
                             context,
@@ -180,6 +188,7 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                                     ? Theme.of(context).hintColor
                                     : null,
                           ),
+                          linkStyle: TextStyle(color: Colors.blueAccent),
                         ),
                       if (widget.message.editedTimestamp != null)
                         Tooltip(

@@ -14,6 +14,7 @@ class GuildList extends ConsumerWidget {
     final guilds = ref.watch(guildsProvider);
     final selectedGuild = ref.watch(selectedGuildProvider);
     final selectedGuildNotifier = ref.read(selectedGuildProvider.notifier);
+    final unreadGuilds = ref.watch(unreadGuildsProvider);
 
     final screenPadding = MediaQuery.paddingOf(context);
 
@@ -72,7 +73,7 @@ class GuildList extends ConsumerWidget {
                       text: guild.name,
                       onTap: () => selectedGuildNotifier.set(guild),
                       isSelected: selectedGuild == guild,
-                      hasDot: true,
+                      hasDot: unreadGuilds.contains(guild.id.value),
                     ),
                   );
                 },
