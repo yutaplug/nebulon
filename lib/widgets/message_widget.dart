@@ -10,11 +10,13 @@ import 'package:intl/intl.dart';
 class MessageWidget extends StatefulWidget {
   final MessageModel message;
   final bool showHeader;
+  final Function(MessageModel)? onReply;
 
   const MessageWidget({
     super.key,
     required this.message,
     this.showHeader = true,
+    this.onReply,
   });
 
   @override
@@ -27,129 +29,211 @@ class _MessageWidgetState extends State<MessageWidget>
   bool get wantKeepAlive => true;
 
   bool _isHovered = false;
+  void _showContextMenu(BuildContext context, Offset position) async {
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    
+    final result = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(position.dx, position.dy, 0, 0),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        PopupMenuItem<String>(
+          value: 'reply',
+          child: Row(
+            children: [
+              Icon(Icons.reply, size: 16),
+              SizedBox(width: 8),
+              Text('Reply'),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (result == 'reply' && widget.onReply != null) {
+      widget.onReply!(widget.message);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return Padding(
       padding:
           widget.showHeader ? const EdgeInsets.only(top: 16) : EdgeInsets.zero,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: ColoredBox(
-          color:
-              _isHovered
-                  ? Theme.of(context).colorScheme.surfaceContainerHigh
-                  : Colors.transparent,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 2, bottom: 2, right: 16),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                widget.showHeader
-                    ? Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: UserAvatar(user: widget.message.author),
-                    )
-                    : SizedBox(
-                      width: 64,
-                      child: Visibility(
-                        visible: _isHovered,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 4),
+      child: GestureDetector(
+        onSecondaryTapUp: (details) {
+          _showContextMenu(context, details.globalPosition);
+        },
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: ColoredBox(
+            color:
+                _isHovered
+                    ? Theme.of(context).colorScheme.surfaceContainerHigh
+                    : Colors.transparent,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2, bottom: 2, right: 16),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  widget.showHeader
+                      ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: UserAvatar(user: widget.message.author),
+                      )
+                      : SizedBox(
+                        width: 64,
+                        child: Visibility(
+                          visible: _isHovered,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  DateFormat(
+                                    "h:mm a",
+                                  ).format(widget.message.timestamp),
+                                  style: TextStyle(
+                                    color: Theme.of(context).hintColor,
+                                    fontSize: 10,
+                                  ),
+                                  overflow: TextOverflow.clip,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (widget.message.reference != null)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 4),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainer,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border(
+                                left: BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.reply, size: 14, color: Theme.of(context).colorScheme.primary),
+                                SizedBox(width: 6),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Replying to ${widget.message.reference!.author.displayName}",
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: Theme.of(context).colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      if (widget.message.reference!.content.isNotEmpty)
+                                        Text(
+                                          widget.message.reference!.content,
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: Theme.of(context).hintColor,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        Visibility(
+                          visible: widget.showHeader,
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            spacing: 8,
                             children: [
                               Text(
+                                widget.message.author.displayName,
+                                maxLines: 1,
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                              Text(
                                 DateFormat(
-                                  "h:mm a",
+                                  widget.message.timestamp.isAfter(
+                                        DateTime.now().subtract(
+                                          const Duration(days: 1),
+                                        ),
+                                      )
+                                      ? "h:mm a"
+                                      : "M/d/yy, h:mm a",
                                 ).format(widget.message.timestamp),
                                 style: TextStyle(
                                   color: Theme.of(context).hintColor,
                                   fontSize: 10,
                                 ),
-                                overflow: TextOverflow.clip,
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    ),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Visibility(
-                        visible: widget.showHeader,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          spacing: 8,
-                          children: [
-                            Text(
-                              widget.message.author.displayName,
-                              maxLines: 1,
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
-                            Text(
-                              DateFormat(
-                                widget.message.timestamp.isAfter(
-                                      DateTime.now().subtract(
-                                        const Duration(days: 1),
-                                      ),
-                                    )
-                                    ? "h:mm a"
-                                    : "M/d/yy, h:mm a",
-                              ).format(widget.message.timestamp),
-                              style: TextStyle(
-                                color: Theme.of(context).hintColor,
-                                fontSize: 10,
+                        if (!(widget.message.attachments.isNotEmpty &&
+                            widget.message.content.isEmpty))
+                          GestureDetector(
+                            onSecondaryTapUp: (details) {
+                              _showContextMenu(context, details.globalPosition);
+                            },
+                            child: SelectableText(
+                              widget.message.content,
+                              focusNode: FocusNode(canRequestFocus: false),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
+                                color:
+                                    widget.message.hasError
+                                        ? Theme.of(context).colorScheme.error
+                                        : widget.message.isPending
+                                        ? Theme.of(context).hintColor
+                                        : null,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      if (!(widget.message.attachments.isNotEmpty &&
-                          widget.message.content.isEmpty))
-                        SelectableText(
-                          widget.message.content,
-                          focusNode: FocusNode(canRequestFocus: false),
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(
-                            color:
-                                widget.message.hasError
-                                    ? Theme.of(context).colorScheme.error
-                                    : widget.message.isPending
-                                    ? Theme.of(context).hintColor
-                                    : null,
                           ),
-                        ),
-                      if (widget.message.editedTimestamp != null)
-                        Tooltip(
-                          message: DateFormat("yyyy/MM/dd, hh:mm:ss a").format(
-                            widget.message.editedTimestamp ?? DateTime.now(),
-                          ),
-                          child: Text(
-                            "(edited)",
-                            style: TextStyle(
-                              color: Theme.of(context).hintColor,
-                              fontSize: 12,
+                        if (widget.message.editedTimestamp != null)
+                          Tooltip(
+                            message: DateFormat("yyyy/MM/dd, hh:mm:ss a").format(
+                              widget.message.editedTimestamp ?? DateTime.now(),
+                            ),
+                            child: Text(
+                              "(edited)",
+                              style: TextStyle(
+                                color: Theme.of(context).hintColor,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
-                        ),
-                      if (widget.message.attachments.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4, bottom: 4),
-                          child: MessageAttachments(
-                            attachments: widget.message.attachments,
+                        if (widget.message.attachments.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4, bottom: 4),
+                            child: MessageAttachments(
+                              attachments: widget.message.attachments,
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

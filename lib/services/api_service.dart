@@ -218,6 +218,27 @@ class ApiService {
     return message;
   }
 
+  Future<MessageModel> sendReply(
+    Snowflake channelId,
+    String content,
+    String nonce,
+    Snowflake referenceMessageId,
+  ) async {
+    final response = await _dio.post(
+      "/channels/$channelId/messages",
+      data: {
+        "content": content,
+        "nonce": nonce,
+        "message_reference": {
+          "message_id": referenceMessageId.value,
+        },
+      },
+    );
+    final message = MessageModel.fromJson(response.data);
+    message.nonce = nonce;
+    return message;
+  }
+
   Future<UserModel> getUser(Snowflake id) async {
     return UserModel.fromJson((await _dio.get("/users/$id")).data);
   }
