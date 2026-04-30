@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:nebulon/models/channel.dart';
 import 'package:nebulon/models/guild.dart';
+import 'package:nebulon/models/message.dart';
 import 'package:nebulon/models/user.dart';
 import 'package:nebulon/services/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

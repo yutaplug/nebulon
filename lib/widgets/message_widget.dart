@@ -176,6 +176,7 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
             ),
           ),
         ),
+        ),
       ),
     );
   }
