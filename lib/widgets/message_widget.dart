@@ -170,7 +170,10 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                       if (!(widget.message.attachments.isNotEmpty &&
                           widget.message.content.isEmpty))
                         SelectableLinkify(
-                          text: widget.message.content,
+                          text: widget.message.content.replaceAllMapped(
+                            RegExp(r'<(https?://[^>]+)>'),
+                            (match) => match.group(1)!,
+                          ),
                           onOpen: (link) async {
                             if (!await launchUrl(Uri.parse(link.url))) {
                               // Could not launch URL
