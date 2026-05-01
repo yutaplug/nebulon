@@ -15,6 +15,40 @@ import 'package:path/path.dart' as p;
 import 'package:dio/dio.dart' show MultipartFile;
 import 'package:http_parser/http_parser.dart';
 
+class ImageFormatDetector {
+  static Map<String, String> detectImageFormat(Uint8List bytes) {
+    if (bytes.length < 4) return {'extension': 'png', 'contentType': 'image/png'};
+    
+    // Check for PNG signature
+    if (bytes.length >= 8 && 
+        bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) {
+      return {'extension': 'png', 'contentType': 'image/png'};
+    }
+    
+    // Check for JPEG signature
+    if (bytes.length >= 3 && 
+        bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) {
+      return {'extension': 'jpg', 'contentType': 'image/jpeg'};
+    }
+    
+    // Check for WebP signature
+    if (bytes.length >= 12 && 
+        bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46 &&
+        bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50) {
+      return {'extension': 'webp', 'contentType': 'image/webp'};
+    }
+    
+    // Check for GIF signature
+    if (bytes.length >= 6 && 
+        bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x38) {
+      return {'extension': 'gif', 'contentType': 'image/gif'};
+    }
+    
+    // Default to PNG if no format is detected
+    return {'extension': 'png', 'contentType': 'image/png'};
+  }
+}
+
 class ChannelTextField extends ConsumerStatefulWidget {
   const ChannelTextField({
     super.key,
@@ -141,10 +175,11 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
                   .map<MultipartFile>((entry) {
                     final bytes = entry.value;
                     final timestamp = DateTime.now().millisecondsSinceEpoch;
+                    final format = ImageFormatDetector.detectImageFormat(bytes);
                     return MultipartFile.fromBytes(
                       bytes,
-                      filename: "upload_${timestamp}_${entry.key}.png",
-                      contentType: MediaType.parse("image/png"),
+                      filename: "upload_${timestamp}_${entry.key}.${format['extension']}",
+                      contentType: MediaType.parse(format['contentType']!),
                     );
                   })
                   .toList()
