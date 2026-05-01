@@ -345,7 +345,44 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                             }).toList(),
                           ),
                           focusNode: FocusNode(canRequestFocus: false),
-                          contextMenuBuilder: (context, selectableRegionState) => const SizedBox.shrink(),
+                          contextMenuBuilder: (context, selectableRegionState) {
+                            return AdaptiveTextSelectionToolbar.buttonItems(
+                              anchors: selectableRegionState.contextMenuAnchors,
+                              buttonItems: [
+                                ContextMenuButtonItem(
+                                  label: 'Reply',
+                                  onPressed: () {
+                                    selectableRegionState.hideToolbar();
+                                    ref
+                                        .read(replyMessageProvider.notifier)
+                                        .state = widget.message;
+                                  },
+                                ),
+                                ContextMenuButtonItem(
+                                  label: 'Copy Text',
+                                  onPressed: () {
+                                    selectableRegionState.hideToolbar();
+                                    Clipboard.setData(
+                                      ClipboardData(
+                                        text: widget.message.content,
+                                      ),
+                                    );
+                                  },
+                                ),
+                                if (widget.message.author.id ==
+                                    ref.read(connectedUserProvider)?.id)
+                                  ContextMenuButtonItem(
+                                    label: 'Edit',
+                                    onPressed: () {
+                                      selectableRegionState.hideToolbar();
+                                      ref
+                                          .read(editMessageProvider.notifier)
+                                          .state = widget.message;
+                                    },
+                                  ),
+                              ],
+                            );
+                          },
                           style: Theme.of(
                             context,
                           ).textTheme.bodyMedium?.copyWith(

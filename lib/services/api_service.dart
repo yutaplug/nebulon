@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -236,15 +238,31 @@ class ApiService {
     String content,
     String nonce, {
     Snowflake? replyToMessageId,
+    List<MultipartFile>? files,
   }) async {
-    final response = await _dio.post(
-      "/channels/$channelId/messages",
-      data: {
+    dynamic data;
+    if (files != null && files.isNotEmpty) {
+      data = FormData.fromMap({
+        "payload_json": jsonEncode({
+          "content": content,
+          "nonce": nonce,
+          if (replyToMessageId != null)
+            "message_reference": {"message_id": replyToMessageId.value},
+        }),
+        for (int i = 0; i < files.length; i++) "files[$i]": files[i],
+      });
+    } else {
+      data = {
         "content": content,
         "nonce": nonce,
         if (replyToMessageId != null)
           "message_reference": {"message_id": replyToMessageId.value},
-      },
+      };
+    }
+
+    final response = await _dio.post(
+      "/channels/$channelId/messages",
+      data: data,
     );
     final message = MessageModel.fromJson(response.data);
     message.nonce = nonce;

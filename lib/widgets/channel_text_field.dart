@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,9 @@ import 'package:nebulon/models/channel.dart';
 import 'package:nebulon/models/message.dart';
 import 'package:nebulon/providers/providers.dart';
 import 'package:nebulon/services/api_service.dart';
+import 'package:pasteboard/pasteboard.dart';
+import 'package:path/path.dart' as p;
+import 'package:dio/dio.dart' show MultipartFile;
 
 class ChannelTextField extends ConsumerStatefulWidget {
   const ChannelTextField({
@@ -50,11 +54,41 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
           if (evt is KeyDownEvent) _sendMessage();
 
           return KeyEventResult.handled;
-        } else {
-          return KeyEventResult.ignored;
         }
+
+        if (HardwareKeyboard.instance.isControlPressed &&
+            evt.logicalKey == LogicalKeyboardKey.keyV) {
+          if (evt is KeyDownEvent) {
+            _handlePaste();
+          }
+        }
+
+        return KeyEventResult.ignored;
       },
     );
+  }
+
+  Future<void> _handlePaste() async {
+    final bytes = await Pasteboard.image;
+    if (bytes != null) {
+      final filename = "upload_${DateTime.now().millisecondsSinceEpoch}.png";
+      final file = MultipartFile.fromBytes(bytes, filename: filename);
+
+      final text = _inputController.text.trim();
+      final nonce = _api.getNextNonce();
+
+      try {
+        await _api.sendMessage(
+          widget.channel.id,
+          text,
+          nonce,
+          files: [file],
+        );
+        _inputController.clear();
+      } catch (error) {
+        log("Error sending image: $error");
+      }
+    }
   }
 
   void _sendMessage() async {
