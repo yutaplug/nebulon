@@ -78,7 +78,8 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
 
   void _sendMessage() async {
     final text = _inputController.text.trim();
-    if (text.isNotEmpty && text.length < 2000) {
+    final pendingAttachments = ref.read(pendingAttachmentsProvider);
+    if ((text.isNotEmpty || pendingAttachments.isNotEmpty) && text.length < 2000) {
       final editMessage = ref.read(editMessageProvider);
       
       if (editMessage != null) {

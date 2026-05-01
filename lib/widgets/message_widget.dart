@@ -246,39 +246,40 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                             const SizedBox(height: 4),
                             if (!(widget.message.attachments.isNotEmpty &&
                                 widget.message.content.isEmpty))
-                              SelectableText.rich(
-                                TextSpan(
-                                  children: linkify(
-                                    widget.message.content.replaceAllMapped(
-                                      RegExp(r'<(https?://[^>]+)>'),
-                                      (match) => match.group(1)!,
-                                    ),
-                                    linkifiers: const [
-                                      MarkdownLinkifier(),
-                                      ChannelMentionLinkifier(),
-                                      UrlLinkifier(),
-                                    ],
-                                    options: const LinkifyOptions(
-                                      humanize: false,
-                                    ),
-                                  ).map((element) {
-                                    if (element is LinkableElement) {
-                                      return TextSpan(
-                                        text: element.text,
-                                        style: const TextStyle(
-                                          color: Colors.blueAccent,
-                                        ),
-                                        recognizer:
-                                            TapGestureRecognizer()
-                                              ..onTap = () async {
-                                                if (element
-                                                    is ChannelMentionElement) {
-                                                  final channel =
-                                                      ChannelModel.getById(
-                                                        int.parse(
-                                                          element.channelId,
-                                                        ),
-                                                      );
+                              SelectionArea(
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: linkify(
+                                      widget.message.content.replaceAllMapped(
+                                        RegExp(r'<(https?://[^>]+)>'),
+                                        (match) => match.group(1)!,
+                                      ),
+                                      linkifiers: const [
+                                        MarkdownLinkifier(),
+                                        ChannelMentionLinkifier(),
+                                        UrlLinkifier(),
+                                      ],
+                                      options: const LinkifyOptions(
+                                        humanize: false,
+                                      ),
+                                    ).map((element) {
+                                      if (element is LinkableElement) {
+                                        return TextSpan(
+                                          text: element.text,
+                                          style: const TextStyle(
+                                            color: Colors.blueAccent,
+                                          ),
+                                          recognizer:
+                                              TapGestureRecognizer()
+                                                ..onTap = () async {
+                                                  if (element
+                                                      is ChannelMentionElement) {
+                                                    final channel =
+                                                        ChannelModel.getById(
+                                                          int.parse(
+                                                            element.channelId,
+                                                          ),
+                                                        );
                                                   if (channel != null) {
                                                     ref
                                                         .read(
@@ -326,53 +327,6 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                                     return TextSpan(text: element.text);
                                   }).toList(),
                                 ),
-                                focusNode: FocusNode(canRequestFocus: false),
-                                contextMenuBuilder: (
-                                  context,
-                                  selectableRegionState,
-                                ) {
-                                  return AdaptiveTextSelectionToolbar.buttonItems(
-                                    anchors:
-                                        selectableRegionState.contextMenuAnchors,
-                                    buttonItems: [
-                                      ContextMenuButtonItem(
-                                        label: 'Reply',
-                                        onPressed: () {
-                                          selectableRegionState.hideToolbar();
-                                          ref
-                                              .read(
-                                                replyMessageProvider.notifier,
-                                              )
-                                              .state = widget.message;
-                                        },
-                                      ),
-                                      ContextMenuButtonItem(
-                                        label: 'Copy Text',
-                                        onPressed: () {
-                                          selectableRegionState.hideToolbar();
-                                          Clipboard.setData(
-                                            ClipboardData(
-                                              text: widget.message.content,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                      if (widget.message.author.id ==
-                                          ref.read(connectedUserProvider)?.id)
-                                        ContextMenuButtonItem(
-                                          label: 'Edit',
-                                          onPressed: () {
-                                            selectableRegionState.hideToolbar();
-                                            ref
-                                                .read(
-                                                  editMessageProvider.notifier,
-                                                )
-                                                .state = widget.message;
-                                          },
-                                        ),
-                                    ],
-                                  );
-                                },
                                 style: Theme.of(
                                   context,
                                 ).textTheme.bodyMedium?.copyWith(
@@ -384,6 +338,7 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                                           : null,
                                 ),
                               ),
+                            ),
                             if (widget.message.editedTimestamp != null)
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),
@@ -435,9 +390,9 @@ class MessageAttachments extends StatelessWidget {
             maxWidth: max(maxWidth, 16),
             maxHeight: max(maxHeight, 16),
           ),
-          child: Flex(
-            direction: Axis.horizontal,
+          child: Wrap(
             spacing: 8,
+            runSpacing: 8,
             children:
                 attachments.map((a) {
                   final bool isImage = a["content_type"]?.startsWith("image");
