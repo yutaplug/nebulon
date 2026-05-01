@@ -13,6 +13,7 @@ import 'package:nebulon/services/api_service.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
 import 'package:dio/dio.dart' show MultipartFile;
+import 'package:http_parser/http_parser.dart';
 
 class ChannelTextField extends ConsumerStatefulWidget {
   const ChannelTextField({
@@ -140,6 +141,7 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
                   .map<MultipartFile>((bytes) => MultipartFile.fromBytes(
                         bytes,
                         filename: "upload.png",
+                        contentType: MediaType("image", "png"),
                       ))
                   .toList()
               : null,

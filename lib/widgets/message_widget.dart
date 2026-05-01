@@ -247,6 +247,44 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                             if (!(widget.message.attachments.isNotEmpty &&
                                 widget.message.content.isEmpty))
                               SelectionArea(
+                                contextMenuBuilder: (context, selectableRegionState) {
+                                  return AdaptiveTextSelectionToolbar.buttonItems(
+                                    anchors: selectableRegionState.contextMenuAnchors,
+                                    buttonItems: [
+                                      ContextMenuButtonItem(
+                                        label: 'Reply',
+                                        onPressed: () {
+                                          selectableRegionState.hideToolbar();
+                                          ref
+                                              .read(replyMessageProvider.notifier)
+                                              .state = widget.message;
+                                        },
+                                      ),
+                                      ContextMenuButtonItem(
+                                        label: 'Copy Text',
+                                        onPressed: () {
+                                          selectableRegionState.hideToolbar();
+                                          Clipboard.setData(
+                                            ClipboardData(
+                                              text: widget.message.content,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      if (widget.message.author.id ==
+                                          ref.read(connectedUserProvider)?.id)
+                                        ContextMenuButtonItem(
+                                          label: 'Edit',
+                                          onPressed: () {
+                                            selectableRegionState.hideToolbar();
+                                            ref
+                                                .read(editMessageProvider.notifier)
+                                                .state = widget.message;
+                                          },
+                                        ),
+                                    ],
+                                  );
+                                },
                                 child: Text.rich(
                                   TextSpan(
                                     children: linkify(
@@ -401,8 +439,8 @@ class MessageAttachments extends StatelessWidget {
                   double finalHeight = maxHeight;
 
                   if (isImage) {
-                    final double imageWidth = a["width"].toDouble();
-                    final double imageHeight = a["height"].toDouble();
+                    final double imageWidth = (a["width"] as num?)?.toDouble() ?? 400;
+                    final double imageHeight = (a["height"] as num?)?.toDouble() ?? 300;
 
                     double scale = min(
                       min(maxWidth / imageWidth, maxHeight / imageHeight),
@@ -414,20 +452,30 @@ class MessageAttachments extends StatelessWidget {
                   }
                   return Flexible(
                     child:
-                        isImage
-                            ? FadeInImage(
-                              placeholder:
-                                  ThumbHash.fromBase64(
-                                    a["placeholder"],
-                                  ).toImage(),
-                              image: cdnImage(context, a["url"]),
-                              fit: BoxFit.cover,
+                        isImage && a["url"] != null
+                            ? CachedNetworkImage(
+                              imageUrl: a["url"],
                               width: finalWidth,
                               height: finalHeight,
-                              fadeInDuration: const Duration(milliseconds: 250),
-                              fadeOutDuration: const Duration(milliseconds: 1),
-                              fadeInCurve: Curves.ease,
-                              fadeOutCurve: Curves.linear,
+                              fit: BoxFit.cover,
+                              placeholder:
+                                  (context, url) =>
+                                      a["placeholder"] != null
+                                          ? Image(
+                                            image: ThumbHash.fromBase64(
+                                              a["placeholder"],
+                                            ).toImage(),
+                                            fit: BoxFit.cover,
+                                          )
+                                          : Container(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.surfaceContainerHigh,
+                                          ),
+                              errorWidget:
+                                  (context, url, error) => const Center(
+                                    child: Icon(Icons.broken_image),
+                                  ),
                             )
                             : Text("[${a["filename"]}]"),
                   );
