@@ -274,6 +274,8 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
                         contentPadding: const EdgeInsets.all(14),
                         border: InputBorder.none,
                       ),
+                      contextMenuBuilder: (context, editableTextState) =>
+                          const SizedBox.shrink(),
                     ),
                   ),
                 ),

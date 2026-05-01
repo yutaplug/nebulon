@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:nebulon/models/message.dart';
+import 'package:nebulon/models/channel.dart';
 import 'package:nebulon/models/user.dart';
 import 'package:nebulon/helpers/cdn_image.dart';
 import 'package:flutter_thumbhash/flutter_thumbhash.dart';
@@ -36,6 +37,54 @@ class MarkdownLinkifier extends Linkifier {
               list.add(TextElement(text.substring(0, match.start)));
             }
             list.add(UrlElement(match.group(2)!, match.group(1)!));
+            text = text.substring(match.end);
+            match = regex.firstMatch(text);
+          }
+          if (text.isNotEmpty) {
+            list.add(TextElement(text));
+          }
+        }
+      } else {
+        list.add(element);
+      }
+    }
+    return list;
+  }
+}
+
+class ChannelMentionElement extends LinkableElement {
+  final String channelId;
+  ChannelMentionElement(this.channelId, String text)
+    : super(text, "channel://$channelId");
+}
+
+class ChannelMentionLinkifier extends Linkifier {
+  const ChannelMentionLinkifier();
+
+  @override
+  List<LinkifyElement> parse(
+    List<LinkifyElement> elements,
+    LinkifyOptions options,
+  ) {
+    final list = <LinkifyElement>[];
+
+    for (var element in elements) {
+      if (element is TextElement) {
+        var text = element.text;
+        final regex = RegExp(r'<#(\d+)>');
+        var match = regex.firstMatch(text);
+
+        if (match == null) {
+          list.add(element);
+        } else {
+          while (match != null) {
+            if (match.start > 0) {
+              list.add(TextElement(text.substring(0, match.start)));
+            }
+            final id = match.group(1)!;
+            final channel = ChannelModel.getById(int.parse(id));
+            final channelName = channel?.displayName ?? id;
+            list.add(ChannelMentionElement(id, "#$channelName"));
             text = text.substring(match.end);
             match = regex.firstMatch(text);
           }
@@ -224,6 +273,7 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                               ),
                               linkifiers: const [
                                 MarkdownLinkifier(),
+                                ChannelMentionLinkifier(),
                                 UrlLinkifier(),
                               ],
                               options: const LinkifyOptions(humanize: false),
@@ -237,6 +287,21 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                                   recognizer:
                                       TapGestureRecognizer()
                                         ..onTap = () async {
+                                          if (element is ChannelMentionElement) {
+                                            final channel = ChannelModel.getById(
+                                              int.parse(element.channelId),
+                                            );
+                                            if (channel != null) {
+                                              ref
+                                                  .read(
+                                                    selectedChannelProvider
+                                                        .notifier,
+                                                  )
+                                                  .set(channel);
+                                            }
+                                            return;
+                                          }
+
                                           if (!await launchUrl(
                                             Uri.parse(element.url),
                                           )) {
@@ -272,6 +337,7 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                             }).toList(),
                           ),
                           focusNode: FocusNode(canRequestFocus: false),
+                          contextMenuBuilder: (context, selectableRegionState) => const SizedBox.shrink(),
                           style: Theme.of(
                             context,
                           ).textTheme.bodyMedium?.copyWith(
