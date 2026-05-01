@@ -458,29 +458,37 @@ class MessageAttachments extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       child:
                           isImage && a["url"] != null
-                              ? CachedNetworkImage(
-                                imageUrl: a["url"],
-                                width: finalWidth,
-                                height: finalHeight,
-                                fit: BoxFit.cover,
-                                placeholder:
-                                    (context, url) =>
-                                        a["placeholder"] != null
-                                            ? Image(
-                                              image: ThumbHash.fromBase64(
-                                                a["placeholder"],
-                                              ).toImage(),
-                                              fit: BoxFit.cover,
-                                            )
-                                            : Container(
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.surfaceContainerHigh,
-                                            ),
-                                errorWidget:
-                                    (context, url, error) => const Center(
-                                      child: Icon(Icons.broken_image),
-                                    ),
+                              ? GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => _ImageDialog(url: a["url"]),
+                                  );
+                                },
+                                child: CachedNetworkImage(
+                                  imageUrl: a["url"],
+                                  width: finalWidth,
+                                  height: finalHeight,
+                                  fit: BoxFit.cover,
+                                  placeholder:
+                                      (context, url) =>
+                                          a["placeholder"] != null
+                                              ? Image(
+                                                image: ThumbHash.fromBase64(
+                                                  a["placeholder"],
+                                                ).toImage(),
+                                                fit: BoxFit.cover,
+                                              )
+                                              : Container(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.surfaceContainerHigh,
+                                              ),
+                                  errorWidget:
+                                      (context, url, error) => const Center(
+                                        child: Icon(Icons.broken_image),
+                                      ),
+                                ),
                               )
                               : Container(
                                 color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -508,6 +516,47 @@ class UserAvatar extends StatelessWidget {
       backgroundColor: Colors.transparent,
       foregroundImage: cdnImage(context, user.avatarPath, size: size),
       radius: size / 2,
+    );
+  }
+}
+
+class _ImageDialog extends StatelessWidget {
+  final String url;
+  const _ImageDialog({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog.fullscreen(
+      backgroundColor: Colors.black.withOpacity(0.9),
+      child: Stack(
+        children: [
+          Center(
+            child: InteractiveViewer(
+              minScale: 0.1,
+              maxScale: 5.0,
+              child: CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.contain,
+                placeholder: (context, url) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Material(
+              color: Colors.transparent,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                onPressed: () => Navigator.of(context).pop(),
+                tooltip: "Close",
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

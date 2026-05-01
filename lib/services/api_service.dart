@@ -248,6 +248,10 @@ class ApiService {
           "nonce": nonce,
           if (replyToMessageId != null)
             "message_reference": {"message_id": replyToMessageId.value},
+          "attachments": List.generate(files.length, (i) => {
+            "id": i,
+            "filename": files[i].filename,
+          }),
         }),
         for (int i = 0; i < files.length; i++) "files[$i]": files[i],
       });
