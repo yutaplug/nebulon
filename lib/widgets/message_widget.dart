@@ -15,6 +15,7 @@ import 'package:nebulon/providers/providers.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:linkify/linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class MarkdownLinkifier extends Linkifier {
   const MarkdownLinkifier();
