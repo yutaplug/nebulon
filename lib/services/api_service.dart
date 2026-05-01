@@ -248,12 +248,6 @@ class ApiService {
         "nonce": nonce,
         if (replyToMessageId != null)
           "message_reference": {"message_id": replyToMessageId.value},
-        "attachments": List.generate(files.length, (i) => {
-          "id": i,
-          "filename": files[i].filename,
-          "content_type": files[i].contentType?.mimeType ?? "application/octet-stream",
-          "description": "Uploaded image",
-        }),
       };
 
       final formData = FormData();
