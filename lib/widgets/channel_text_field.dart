@@ -139,12 +139,11 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
           files: pendingAttachments.isNotEmpty
               ? pendingAttachments.asMap().entries
                   .map<MultipartFile>((entry) {
-                    final i = entry.key;
                     final bytes = entry.value;
                     return MultipartFile.fromBytes(
                       bytes,
-                      filename: "image$i.png",
-                      contentType: MediaType("image", "png"),
+                      filename: "image.png",
+                      contentType: MediaType.parse("image/png"),
                     );
                   })
                   .toList()
