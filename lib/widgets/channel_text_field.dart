@@ -136,17 +136,17 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
           text,
           nonce,
           replyToMessageId: replyMessage?.id,
-          files: pendingAttachments.isNotEmpty
-              ? pendingAttachments
-                  .map<MultipartFile>((bytes) {
-                    final timestamp = DateTime.now().millisecondsSinceEpoch;
-                    return MultipartFile.fromBytes(
-                      bytes,
-                      filename: "upload_$timestamp.png",
-                      contentType: MediaType("image", "png"),
-                    );
-                  })
-                  .toList()
+          files: pendingAttachments.asMap().entries
+              .map<MultipartFile>((entry) {
+                final i = entry.key;
+                final bytes = entry.value;
+                return MultipartFile.fromBytes(
+                  bytes,
+                  filename: "image$i.png",
+                  contentType: MediaType("image", "png"),
+                );
+              })
+              .toList()
               : null,
         );
         ref.read(replyMessageProvider.notifier).state = null;
