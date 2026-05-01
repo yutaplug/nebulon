@@ -71,23 +71,7 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
   Future<void> _handlePaste() async {
     final bytes = await Pasteboard.image;
     if (bytes != null) {
-      final filename = "upload_${DateTime.now().millisecondsSinceEpoch}.png";
-      final file = MultipartFile.fromBytes(bytes, filename: filename);
-
-      final text = _inputController.text.trim();
-      final nonce = _api.getNextNonce();
-
-      try {
-        await _api.sendMessage(
-          widget.channel.id,
-          text,
-          nonce,
-          files: [file],
-        );
-        _inputController.clear();
-      } catch (error) {
-        log("Error sending image: $error");
-      }
+      ref.read(pendingAttachmentsProvider.notifier).update((state) => [...state, bytes]);
     }
   }
 
@@ -128,6 +112,8 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
 
       final nonce = _api.getNextNonce();
       final replyMessage = ref.read(replyMessageProvider);
+      final pendingAttachments = ref.read(pendingAttachmentsProvider);
+      
       final pendingMessage = MessageModel(
         id: Snowflake.fromDate(DateTime.now()),
         author: ref.read(connectedUserProvider)!,
@@ -138,6 +124,7 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
         nonce: nonce,
       );
       _inputController.clear();
+      ref.read(pendingAttachmentsProvider.notifier).state = [];
       widget.onMessageSubmit?.call(pendingMessage);
 
       try {
@@ -146,6 +133,14 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
           text,
           nonce,
           replyToMessageId: replyMessage?.id,
+          files: pendingAttachments.isNotEmpty
+              ? pendingAttachments
+                  .map((bytes) => MultipartFile.fromBytes(
+                    bytes,
+                    filename: "upload.png",
+                  ))
+                  .toList()
+              : null,
         );
         ref.read(replyMessageProvider.notifier).state = null;
         widget.onMessageSent?.call(message);
@@ -190,6 +185,7 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
     final screenPadding = MediaQuery.paddingOf(context);
     final replyMessage = ref.watch(replyMessageProvider);
     final editMessage = ref.watch(editMessageProvider);
+    final pendingAttachments = ref.watch(pendingAttachmentsProvider);
 
     ref.listen<MessageModel?>(editMessageProvider, (previous, next) {
       if (next != null && next != previous) {
@@ -279,6 +275,59 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
                       constraints: const BoxConstraints(),
                     ),
                   ],
+                ),
+              ),
+            if (pendingAttachments.isNotEmpty)
+              Container(
+                height: 100,
+                padding: const EdgeInsets.all(8),
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: pendingAttachments.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    return Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: Image.memory(
+                            pendingAttachments[index],
+                            height: 84,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Material(
+                            color: Colors.black54,
+                            shape: const CircleBorder(),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                              onPressed: () {
+                                ref
+                                    .read(pendingAttachmentsProvider.notifier)
+                                    .update((state) {
+                                      final next = [...state];
+                                      next.removeAt(index);
+                                      return next;
+                                    });
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 24,
+                                minHeight: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             Row(

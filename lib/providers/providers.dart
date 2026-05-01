@@ -118,6 +118,7 @@ final unreadGuildsProvider = Provider<Set<int>>((ref) {
 
 final replyMessageProvider = StateProvider<MessageModel?>((ref) => null);
 final editMessageProvider = StateProvider<MessageModel?>((ref) => null);
+final pendingAttachmentsProvider = StateProvider<List<Uint8List>>((ref) => []);
 
 final hasDrawerProvider = StateProvider<bool>((ref) => false);
 final sidebarWidthProvider = StateProvider<double>((ref) => 320);

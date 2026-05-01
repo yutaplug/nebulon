@@ -119,7 +119,14 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
   @override
   bool get wantKeepAlive => true;
 
-  bool _isHovered = false;
+  final ValueNotifier<bool> _isHovered = ValueNotifier(false);
+  
+  @override
+  void dispose() {
+    _isHovered.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -127,8 +134,8 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
       padding:
           widget.showHeader ? const EdgeInsets.only(top: 16) : EdgeInsets.zero,
       child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
+        onEnter: (_) => _isHovered.value = true,
+        onExit: (_) => _isHovered.value = false,
         child: GestureDetector(
           onSecondaryTapDown: (details) {
             showMenu(
@@ -164,13 +171,20 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
               ],
             );
           },
-          child: ColoredBox(
-            color:
-                _isHovered
-                    ? Theme.of(context).colorScheme.surfaceContainerHigh
-                    : Colors.transparent,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 2, bottom: 2, right: 16),
+          child: ValueListenableBuilder<bool>(
+            valueListenable: _isHovered,
+            builder: (context, hovered, child) {
+              return ColoredBox(
+                color:
+                    hovered
+                        ? Theme.of(context).colorScheme.surfaceContainerHigh
+                        : Colors.transparent,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2, bottom: 2, right: 16),
+                  child: child,
+                ),
+              );
+            },
             child: Row(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
