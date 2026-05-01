@@ -261,8 +261,12 @@ class ApiService {
         ),
       };
 
-      for (int i = 0; i < files.length; i++) {
-        formMap["files[$i]"] = files[i];
+      if (files.length == 1) {
+        formMap["file"] = files[0];
+      } else {
+        for (int i = 0; i < files.length; i++) {
+          formMap["files[$i]"] = files[i];
+        }
       }
 
       data = FormData.fromMap(formMap);
