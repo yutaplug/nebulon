@@ -242,19 +242,29 @@ class ApiService {
   }) async {
     dynamic data;
     if (files != null && files.isNotEmpty) {
-      data = FormData.fromMap({
-        "payload_json": jsonEncode({
-          "content": content,
-          "nonce": nonce,
-          if (replyToMessageId != null)
-            "message_reference": {"message_id": replyToMessageId.value},
-          "attachments": List.generate(files.length, (i) => {
-            "id": i,
-            "filename": files[i].filename,
-          }),
+      final payload = {
+        "content": content,
+        "nonce": nonce,
+        if (replyToMessageId != null)
+          "message_reference": {"message_id": replyToMessageId.value},
+        "attachments": List.generate(files.length, (i) => {
+          "id": i,
+          "filename": files[i].filename,
         }),
-        for (int i = 0; i < files.length; i++) "files[$i]": files[i],
-      });
+      };
+
+      final Map<String, dynamic> formMap = {
+        "payload_json": MultipartFile.fromString(
+          jsonEncode(payload),
+          contentType: MediaType("application", "json"),
+        ),
+      };
+
+      for (int i = 0; i < files.length; i++) {
+        formMap["files[$i]"] = files[i];
+      }
+
+      data = FormData.fromMap(formMap);
     } else {
       data = {
         "content": content,
