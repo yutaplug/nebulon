@@ -451,34 +451,43 @@ class MessageAttachments extends StatelessWidget {
                     finalWidth = imageWidth * scale;
                     finalHeight = imageHeight * scale;
                   }
-                  return Flexible(
-                    child:
-                        isImage && a["url"] != null
-                            ? CachedNetworkImage(
-                              imageUrl: a["url"],
-                              width: finalWidth,
-                              height: finalHeight,
-                              fit: BoxFit.cover,
-                              placeholder:
-                                  (context, url) =>
-                                      a["placeholder"] != null
-                                          ? Image(
-                                            image: ThumbHash.fromBase64(
-                                              a["placeholder"],
-                                            ).toImage(),
-                                            fit: BoxFit.cover,
-                                          )
-                                          : Container(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.surfaceContainerHigh,
-                                          ),
-                              errorWidget:
-                                  (context, url, error) => const Center(
-                                    child: Icon(Icons.broken_image),
-                                  ),
-                            )
-                            : Text("[${a["filename"]}]"),
+                  return SizedBox(
+                    width: finalWidth,
+                    height: finalHeight,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child:
+                          isImage && a["url"] != null
+                              ? CachedNetworkImage(
+                                imageUrl: a["url"],
+                                width: finalWidth,
+                                height: finalHeight,
+                                fit: BoxFit.cover,
+                                placeholder:
+                                    (context, url) =>
+                                        a["placeholder"] != null
+                                            ? Image(
+                                              image: ThumbHash.fromBase64(
+                                                a["placeholder"],
+                                              ).toImage(),
+                                              fit: BoxFit.cover,
+                                            )
+                                            : Container(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.surfaceContainerHigh,
+                                            ),
+                                errorWidget:
+                                    (context, url, error) => const Center(
+                                      child: Icon(Icons.broken_image),
+                                    ),
+                              )
+                              : Container(
+                                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                                alignment: Alignment.center,
+                                child: Text("[${a["filename"]}]"),
+                              ),
+                    ),
                   );
                 }).toList(),
           ),
