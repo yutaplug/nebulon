@@ -94,6 +94,13 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                     ref.read(replyMessageProvider.notifier).state = widget.message;
                   },
                 ),
+                if (widget.message.author.id == ref.read(connectedUserProvider)?.id)
+                  PopupMenuItem(
+                    child: const Text('Edit'),
+                    onTap: () {
+                      ref.read(editMessageProvider.notifier).state = widget.message;
+                    },
+                  ),
               ],
             );
           },

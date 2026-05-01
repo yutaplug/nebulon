@@ -60,6 +60,38 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
   void _sendMessage() async {
     final text = _inputController.text.trim();
     if (text.isNotEmpty && text.length < 2000) {
+      final editMessage = ref.read(editMessageProvider);
+      
+      if (editMessage != null) {
+        _inputController.clear();
+        ref.read(editMessageProvider.notifier).state = null;
+        try {
+          final message = await _api.editMessage(
+            widget.channel.id,
+            editMessage.id,
+            text,
+          );
+          // Optional: handle message update locally if needed
+        } catch (error) {
+          widget.onError?.call(error);
+          if (!mounted) return;
+          showDialog(
+            context: context,
+            builder: (context) {
+              return Center(
+                child: Dialog(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text("Can't edit message.\nError: $error"),
+                  ),
+                ),
+              );
+            },
+          );
+        }
+        return;
+      }
+
       final nonce = _api.getNextNonce();
       final replyMessage = ref.read(replyMessageProvider);
       final pendingMessage = MessageModel(
@@ -123,6 +155,15 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
   Widget build(BuildContext context) {
     final screenPadding = MediaQuery.paddingOf(context);
     final replyMessage = ref.watch(replyMessageProvider);
+    final editMessage = ref.watch(editMessageProvider);
+
+    ref.listen<MessageModel?>(editMessageProvider, (previous, next) {
+      if (next != null && next != previous) {
+        _inputController.text = next.content;
+        _inputFocusNode.requestFocus();
+        _inputController.selection = TextSelection.fromPosition(TextPosition(offset: _inputController.text.length));
+      }
+    });
 
     return ColoredBox(
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -163,6 +204,42 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
                       icon: const Icon(Icons.close, size: 16),
                       onPressed: () {
                         ref.read(replyMessageProvider.notifier).state = null;
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+            if (editMessage != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.edit,
+                      size: 16,
+                      color: Theme.of(context).hintColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Editing Message",
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: Theme.of(context).hintColor,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 16),
+                      onPressed: () {
+                        ref.read(editMessageProvider.notifier).state = null;
+                        _inputController.clear();
                       },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),

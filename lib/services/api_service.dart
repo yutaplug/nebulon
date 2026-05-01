@@ -251,6 +251,20 @@ class ApiService {
     return message;
   }
 
+  Future<MessageModel> editMessage(
+    Snowflake channelId,
+    Snowflake messageId,
+    String content,
+  ) async {
+    final response = await _dio.patch(
+      "/channels/$channelId/messages/$messageId",
+      data: {
+        "content": content,
+      },
+    );
+    return MessageModel.fromJson(response.data);
+  }
+
   Future<UserModel> getUser(Snowflake id) async {
     return UserModel.fromJson((await _dio.get("/users/$id")).data);
   }
