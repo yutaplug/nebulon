@@ -146,6 +146,14 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                     ref.read(replyMessageProvider.notifier).state = widget.message;
                   },
                 ),
+                PopupMenuItem(
+                  child: const Text('Copy Text'),
+                  onTap: () {
+                    Clipboard.setData(
+                      ClipboardData(text: widget.message.content),
+                    );
+                  },
+                ),
                 if (widget.message.author.id == ref.read(connectedUserProvider)?.id)
                   PopupMenuItem(
                     child: const Text('Edit'),
