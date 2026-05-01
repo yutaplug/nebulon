@@ -254,7 +254,9 @@ class ApiService {
         }),
       };
 
-      data = FormData.fromEntries([
+      final formData = FormData();
+      
+      formData.files.add(
         MapEntry(
           "payload_json",
           MultipartFile.fromString(
@@ -262,10 +264,13 @@ class ApiService {
             contentType: MediaType("application", "json"),
           ),
         ),
-        ...files.asMap().entries.map(
-          (entry) => MapEntry("files[${entry.key}]", entry.value),
-        ),
-      ]);
+      );
+
+      for (int i = 0; i < files.length; i++) {
+        formData.files.add(MapEntry("files[$i]", files[i]));
+      }
+
+      data = formData;
     } else {
       data = {
         "content": content,
