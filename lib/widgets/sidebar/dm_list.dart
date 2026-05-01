@@ -9,7 +9,13 @@ class DMList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final channels = ref.watch(privateChannelsProvider);
+    final channels = [...ref.watch(privateChannelsProvider)];
+    channels.sort((a, b) {
+      final aId = a.lastMessageId?.value ?? 0;
+      final bId = b.lastMessageId?.value ?? 0;
+      return bId.compareTo(aId);
+    });
+
     return SuperListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: channels.length,

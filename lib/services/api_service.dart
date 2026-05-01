@@ -137,6 +137,28 @@ class ApiService {
             (data["private_channels"] as List)
                 .map((channel) => ChannelModel.fromJson(channel, service: this))
                 .toList();
+
+        if (data["read_state"] != null) {
+          final entries = data["read_state"] is List ? data["read_state"] : data["read_state"]["entries"];
+          if (entries != null) {
+            for (var entry in entries) {
+            try {
+              final channelId = Snowflake(entry["id"]);
+              final lastRead = entry["last_message_id"] != null ? Snowflake(entry["last_message_id"]) : null;
+              
+              if (lastRead != null) {
+                final channel = ChannelModel.getById(channelId.value);
+                if (channel != null && channel.lastMessageId != null) {
+                  if (channel.lastMessageId! > lastRead) {
+                    _ref.read(unreadChannelsProvider.notifier).markUnread(channelId.value);
+                  }
+                }
+              }
+            } catch (_) {}
+          }
+          }
+        }
+        break;
       case "MESSAGE_CREATE":
         final channelId = Snowflake(data["channel_id"]);
         _messageEventController.add(

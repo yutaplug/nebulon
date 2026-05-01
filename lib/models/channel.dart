@@ -65,6 +65,7 @@ class ChannelModel extends CacheableResource {
     this.recipients,
     this.parentId,
     this.position,
+    this.lastMessageId,
     this.messages,
     this.fullyLoaded = false,
     ApiService? service,
@@ -78,6 +79,7 @@ class ChannelModel extends CacheableResource {
   int? parentId;
   ChannelModel? get parent => parentId != null ? getById(parentId!) : null;
   int? position = 0;
+  Snowflake? lastMessageId;
   ChannelType type = ChannelType.text;
   List<UserModel>? recipients = [];
 
@@ -104,6 +106,7 @@ class ChannelModel extends CacheableResource {
     if (event.type == MessageEventType.create) {
       messages ??= [];
       messages!.insert(0, event.message!);
+      lastMessageId = event.messageId;
     } else if (messages != null &&
         messages!.isNotEmpty &&
         event.messageId >= messages!.last.id) {
@@ -149,7 +152,7 @@ class ChannelModel extends CacheableResource {
   }) {
     return ChannelModel(
       id: Snowflake(json["id"]),
-      guildId: int.tryParse(json["guild_id"] ?? ""),
+      guildId: json["guild_id"] != null ? int.tryParse(json["guild_id"].toString()) : null,
       type: ChannelType.getByValue(json["type"]),
       recipients:
           json["recipients"] != null
@@ -157,8 +160,9 @@ class ChannelModel extends CacheableResource {
                   .map((userJson) => UserModel.fromJson(userJson))
                   .toList()
               : [],
-      parentId: int.tryParse(json["parent_id"] ?? ""),
+      parentId: json["parent_id"] != null ? int.tryParse(json["parent_id"].toString()) : null,
       position: json["position"],
+      lastMessageId: json["last_message_id"] != null ? Snowflake(json["last_message_id"]) : null,
       name: json["name"],
       service: service,
     );

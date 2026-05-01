@@ -12,6 +12,42 @@ import 'package:nebulon/providers/providers.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+class MarkdownLinkifier extends Linkifier {
+  const MarkdownLinkifier();
+
+  @override
+  List<LinkifyElement> parse(List<LinkifyElement> elements, LinkifyOptions options) {
+    final list = <LinkifyElement>[];
+
+    for (var element in elements) {
+      if (element is TextElement) {
+        var text = element.text;
+        final regex = RegExp(r'\[(.*?)\]\((.*?)\)');
+        var match = regex.firstMatch(text);
+
+        if (match == null) {
+          list.add(element);
+        } else {
+          while (match != null) {
+            if (match.start > 0) {
+              list.add(TextElement(text.substring(0, match.start)));
+            }
+            list.add(UrlElement(match.group(2)!, match.group(1)!));
+            text = text.substring(match.end);
+            match = regex.firstMatch(text);
+          }
+          if (text.isNotEmpty) {
+            list.add(TextElement(text));
+          }
+        }
+      } else {
+        list.add(element);
+      }
+    }
+    return list;
+  }
+}
+
 class MessageWidget extends ConsumerStatefulWidget {
   final MessageModel message;
   final bool showHeader;
@@ -174,6 +210,7 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                             RegExp(r'<(https?://[^>]+)>'),
                             (match) => match.group(1)!,
                           ),
+                          linkifiers: const [MarkdownLinkifier(), UrlLinkifier()],
                           onOpen: (link) async {
                             if (!await launchUrl(Uri.parse(link.url))) {
                               // Could not launch URL

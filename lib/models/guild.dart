@@ -113,8 +113,10 @@ class GuildModel extends Resource {
       channels:
           (json["channels"] as List)
               .map(
-                (channelJson) =>
-                    ChannelModel.fromJson(channelJson, service: service),
+                (channelJson) {
+                  channelJson["guild_id"] ??= json["id"];
+                  return ChannelModel.fromJson(channelJson, service: service);
+                }
               )
               .toList(),
       roles:
