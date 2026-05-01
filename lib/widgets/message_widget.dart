@@ -181,260 +181,238 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                         : Colors.transparent,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 2, bottom: 2, right: 16),
-                  child: child,
-                ),
-              );
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                widget.showHeader
-                    ? Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: UserAvatar(user: widget.message.author),
-                    )
-                    : SizedBox(
-                      width: 64,
-                      child: Visibility(
-                        visible: _isHovered,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                DateFormat(
-                                  "h:mm a",
-                                ).format(widget.message.timestamp),
-                                style: TextStyle(
-                                  color: Theme.of(context).hintColor,
-                                  fontSize: 10,
-                                ),
-                                overflow: TextOverflow.clip,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (widget.message.reference != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Row(
-                            children: [
-                              Icon(Icons.reply, size: 16, color: Theme.of(context).hintColor),
-                              const SizedBox(width: 4),
-                              UserAvatar(user: widget.message.reference!.author, size: 16),
-                              const SizedBox(width: 4),
-                              Text(
-                                "@${widget.message.reference!.author.displayName}",
-                                style: TextStyle(
-                                  color: Theme.of(context).hintColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                      widget.showHeader
+                          ? Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: UserAvatar(user: widget.message.author),
+                          )
+                          : SizedBox(
+                            width: 64,
+                            child: Visibility(
+                              visible: hovered,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      DateFormat(
+                                        "h:mm a",
+                                      ).format(widget.message.timestamp),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Theme.of(context).hintColor,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              Expanded(
+                            ),
+                          ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (widget.showHeader) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Text(
+                                    widget.message.author.displayName,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    DateFormat(
+                                      "MMM d, y h:mm a",
+                                    ).format(widget.message.timestamp),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: Theme.of(context).hintColor,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            const SizedBox(height: 4),
+                            if (!(widget.message.attachments.isNotEmpty &&
+                                widget.message.content.isEmpty))
+                              SelectableText.rich(
+                                TextSpan(
+                                  children: linkify(
+                                    widget.message.content.replaceAllMapped(
+                                      RegExp(r'<(https?://[^>]+)>'),
+                                      (match) => match.group(1)!,
+                                    ),
+                                    linkifiers: const [
+                                      MarkdownLinkifier(),
+                                      ChannelMentionLinkifier(),
+                                      UrlLinkifier(),
+                                    ],
+                                    options: const LinkifyOptions(
+                                      humanize: false,
+                                    ),
+                                  ).map((element) {
+                                    if (element is LinkableElement) {
+                                      return TextSpan(
+                                        text: element.text,
+                                        style: const TextStyle(
+                                          color: Colors.blueAccent,
+                                        ),
+                                        recognizer:
+                                            TapGestureRecognizer()
+                                              ..onTap = () async {
+                                                if (element
+                                                    is ChannelMentionElement) {
+                                                  final channel =
+                                                      ChannelModel.getById(
+                                                        int.parse(
+                                                          element.channelId,
+                                                        ),
+                                                      );
+                                                  if (channel != null) {
+                                                    ref
+                                                        .read(
+                                                          selectedChannelProvider
+                                                              .notifier,
+                                                        )
+                                                        .set(channel);
+                                                  }
+                                                  return;
+                                                }
+
+                                                if (!await launchUrl(
+                                                  Uri.parse(element.url),
+                                                )) {
+                                                  // Could not launch URL
+                                                }
+                                              }
+                                              ..onSecondaryTapUp = (details) {
+                                                showMenu(
+                                                  context: context,
+                                                  position: RelativeRect.fromLTRB(
+                                                    details.globalPosition.dx,
+                                                    details.globalPosition.dy,
+                                                    details.globalPosition.dx,
+                                                    details.globalPosition.dy,
+                                                  ),
+                                                  items: [
+                                                    PopupMenuItem(
+                                                      child: const Text(
+                                                        'Copy Link',
+                                                      ),
+                                                      onTap: () {
+                                                        Clipboard.setData(
+                                                          ClipboardData(
+                                                            text: element.url,
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                      );
+                                    }
+                                    return TextSpan(text: element.text);
+                                  }).toList(),
+                                ),
+                                focusNode: FocusNode(canRequestFocus: false),
+                                contextMenuBuilder: (
+                                  context,
+                                  selectableRegionState,
+                                ) {
+                                  return AdaptiveTextSelectionToolbar.buttonItems(
+                                    anchors:
+                                        selectableRegionState.contextMenuAnchors,
+                                    buttonItems: [
+                                      ContextMenuButtonItem(
+                                        label: 'Reply',
+                                        onPressed: () {
+                                          selectableRegionState.hideToolbar();
+                                          ref
+                                              .read(
+                                                replyMessageProvider.notifier,
+                                              )
+                                              .state = widget.message;
+                                        },
+                                      ),
+                                      ContextMenuButtonItem(
+                                        label: 'Copy Text',
+                                        onPressed: () {
+                                          selectableRegionState.hideToolbar();
+                                          Clipboard.setData(
+                                            ClipboardData(
+                                              text: widget.message.content,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      if (widget.message.author.id ==
+                                          ref.read(connectedUserProvider)?.id)
+                                        ContextMenuButtonItem(
+                                          label: 'Edit',
+                                          onPressed: () {
+                                            selectableRegionState.hideToolbar();
+                                            ref
+                                                .read(
+                                                  editMessageProvider.notifier,
+                                                )
+                                                .state = widget.message;
+                                          },
+                                        ),
+                                    ],
+                                  );
+                                },
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  color:
+                                      widget.message.hasError
+                                          ? Theme.of(context).colorScheme.error
+                                          : widget.message.isPending
+                                          ? Theme.of(context).hintColor
+                                          : null,
+                                ),
+                              ),
+                            if (widget.message.editedTimestamp != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
                                 child: Text(
-                                  widget.message.reference!.content,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
+                                  "(edited)",
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelSmall?.copyWith(
                                     color: Theme.of(context).hintColor,
-                                    fontSize: 12,
+                                    fontSize: 10,
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      Visibility(
-                        visible: widget.showHeader,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          spacing: 8,
-                          children: [
-                            Text(
-                              widget.message.author.displayName,
-                              maxLines: 1,
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
-                            Text(
-                              DateFormat(
-                                widget.message.timestamp.isAfter(
-                                      DateTime.now().subtract(
-                                        const Duration(days: 1),
-                                      ),
-                                    )
-                                    ? "h:mm a"
-                                    : "M/d/yy, h:mm a",
-                              ).format(widget.message.timestamp),
-                              style: TextStyle(
-                                color: Theme.of(context).hintColor,
-                                fontSize: 10,
+                            if (widget.message.attachments.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: MessageAttachments(
+                                  attachments: widget.message.attachments,
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ),
-                      if (!(widget.message.attachments.isNotEmpty &&
-                          widget.message.content.isEmpty))
-                        SelectableText.rich(
-                          TextSpan(
-                            children: linkify(
-                              widget.message.content.replaceAllMapped(
-                                RegExp(r'<(https?://[^>]+)>'),
-                                (match) => match.group(1)!,
-                              ),
-                              linkifiers: const [
-                                MarkdownLinkifier(),
-                                ChannelMentionLinkifier(),
-                                UrlLinkifier(),
-                              ],
-                              options: const LinkifyOptions(humanize: false),
-                            ).map((element) {
-                              if (element is LinkableElement) {
-                                return TextSpan(
-                                  text: element.text,
-                                  style: const TextStyle(
-                                    color: Colors.blueAccent,
-                                  ),
-                                  recognizer:
-                                      TapGestureRecognizer()
-                                        ..onTap = () async {
-                                          if (element is ChannelMentionElement) {
-                                            final channel = ChannelModel.getById(
-                                              int.parse(element.channelId),
-                                            );
-                                            if (channel != null) {
-                                              ref
-                                                  .read(
-                                                    selectedChannelProvider
-                                                        .notifier,
-                                                  )
-                                                  .set(channel);
-                                            }
-                                            return;
-                                          }
-
-                                          if (!await launchUrl(
-                                            Uri.parse(element.url),
-                                          )) {
-                                            // Could not launch URL
-                                          }
-                                        }
-                                        ..onSecondaryTapUp = (details) {
-                                          showMenu(
-                                            context: context,
-                                            position: RelativeRect.fromLTRB(
-                                              details.globalPosition.dx,
-                                              details.globalPosition.dy,
-                                              details.globalPosition.dx,
-                                              details.globalPosition.dy,
-                                            ),
-                                            items: [
-                                              PopupMenuItem(
-                                                child: const Text('Copy Link'),
-                                                onTap: () {
-                                                  Clipboard.setData(
-                                                    ClipboardData(
-                                                      text: element.url,
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                );
-                              }
-                              return TextSpan(text: element.text);
-                            }).toList(),
-                          ),
-                          focusNode: FocusNode(canRequestFocus: false),
-                          contextMenuBuilder: (context, selectableRegionState) {
-                            return AdaptiveTextSelectionToolbar.buttonItems(
-                              anchors: selectableRegionState.contextMenuAnchors,
-                              buttonItems: [
-                                ContextMenuButtonItem(
-                                  label: 'Reply',
-                                  onPressed: () {
-                                    selectableRegionState.hideToolbar();
-                                    ref
-                                        .read(replyMessageProvider.notifier)
-                                        .state = widget.message;
-                                  },
-                                ),
-                                ContextMenuButtonItem(
-                                  label: 'Copy Text',
-                                  onPressed: () {
-                                    selectableRegionState.hideToolbar();
-                                    Clipboard.setData(
-                                      ClipboardData(
-                                        text: widget.message.content,
-                                      ),
-                                    );
-                                  },
-                                ),
-                                if (widget.message.author.id ==
-                                    ref.read(connectedUserProvider)?.id)
-                                  ContextMenuButtonItem(
-                                    label: 'Edit',
-                                    onPressed: () {
-                                      selectableRegionState.hideToolbar();
-                                      ref
-                                          .read(editMessageProvider.notifier)
-                                          .state = widget.message;
-                                    },
-                                  ),
-                              ],
-                            );
-                          },
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(
-                            color:
-                                widget.message.hasError
-                                    ? Theme.of(context).colorScheme.error
-                                    : widget.message.isPending
-                                    ? Theme.of(context).hintColor
-                                    : null,
-                          ),
-                        ),
-                      if (widget.message.editedTimestamp != null)
-                        Tooltip(
-                          message: DateFormat("yyyy/MM/dd, hh:mm:ss a").format(
-                            widget.message.editedTimestamp ?? DateTime.now(),
-                          ),
-                          child: Text(
-                            "(edited)",
-                            style: TextStyle(
-                              color: Theme.of(context).hintColor,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      if (widget.message.attachments.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4, bottom: 4),
-                          child: MessageAttachments(
-                            attachments: widget.message.attachments,
-                          ),
-                        ),
                     ],
                   ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
-        ),
         ),
       ),
     );

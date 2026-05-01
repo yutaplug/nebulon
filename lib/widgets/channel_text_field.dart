@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -135,10 +136,10 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
           replyToMessageId: replyMessage?.id,
           files: pendingAttachments.isNotEmpty
               ? pendingAttachments
-                  .map((bytes) => MultipartFile.fromBytes(
-                    bytes,
-                    filename: "upload.png",
-                  ))
+                  .map<MultipartFile>((bytes) => MultipartFile.fromBytes(
+                        bytes,
+                        filename: "upload.png",
+                      ))
                   .toList()
               : null,
         );
