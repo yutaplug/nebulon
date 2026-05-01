@@ -214,18 +214,21 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
           nonce,
           replyToMessageId: replyMessage?.id,
           files: pendingAttachments.isNotEmpty
-              ? pendingAttachments.asMap().entries
-                  .map<MultipartFile>((entry) {
+              ? pendingAttachments.asMap().entries.map((entry) {
                     final bytes = entry.value;
                     final timestamp = DateTime.now().millisecondsSinceEpoch;
                     final format = ImageFormatDetector.detectImageFormat(bytes);
-                    return MultipartFile.fromBytes(
+                    final dimensions = ImageFormatDetector.getImageDimensions(bytes);
+                    final file = MultipartFile.fromBytes(
                       bytes,
                       filename: "upload_${timestamp}_${entry.key}.${format['extension']}",
                       contentType: MediaType.parse(format['contentType']!),
                     );
-                  })
-                  .toList()
+                    return {
+                      'file': file,
+                      'dimensions': dimensions,
+                    };
+                  }).toList()
               : null,
         );
         ref.read(replyMessageProvider.notifier).state = null;

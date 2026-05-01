@@ -240,7 +240,7 @@ class ApiService {
     String content,
     String nonce, {
     Snowflake? replyToMessageId,
-    List<MultipartFile>? files,
+    List<Map<String, dynamic>>? files,
   }) async {
     dynamic data;
     if (files != null && files.isNotEmpty) {
@@ -250,13 +250,14 @@ class ApiService {
         if (replyToMessageId != null)
           "message_reference": {"message_id": replyToMessageId.value},
         "attachments": List.generate(files.length, (i) {
-          final bytes = files[i].finalize();
-          final dimensions = _getImageDimensions(bytes);
+          final fileData = files[i];
+          final file = fileData['file'] as MultipartFile;
+          final dimensions = fileData['dimensions'] as Map<String, int>;
           return {
             "id": i,
-            "filename": files[i].filename,
-            "content_type": files[i].contentType?.mimeType ?? "application/octet-stream",
-            "size": files[i].length,
+            "filename": file.filename,
+            "content_type": file.contentType?.mimeType ?? "application/octet-stream",
+            "size": file.length,
             if (dimensions["width"]! > 0 && dimensions["height"]! > 0) ...{
               "width": dimensions["width"],
               "height": dimensions["height"],
@@ -278,7 +279,8 @@ class ApiService {
       );
 
       for (int i = 0; i < files.length; i++) {
-        formData.files.add(MapEntry("files[$i]", files[i]));
+        final file = files[i]['file'] as MultipartFile;
+        formData.files.add(MapEntry("files[$i]", file));
       }
 
       data = formData;
