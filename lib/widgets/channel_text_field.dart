@@ -142,7 +142,7 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
                     final bytes = entry.value;
                     return MultipartFile.fromBytes(
                       bytes,
-                      filename: "image.png",
+                      filename: "nebulon_upload.png",
                       contentType: MediaType.parse("image/png"),
                     );
                   })
