@@ -245,6 +245,56 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                               ),
                             ],
                             const SizedBox(height: 4),
+                            if (widget.message.reference != null)
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    left: BorderSide(
+                                      color: Theme.of(context).colorScheme.outline,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.reply,
+                                      size: 16,
+                                      color: Theme.of(context).hintColor,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Replying to ${widget.message.reference!.author.displayName}",
+                                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                                  color: Theme.of(context).hintColor,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                          if (widget.message.reference!.content.isNotEmpty)
+                                            Text(
+                                              widget.message.reference!.content.length > 100
+                                                  ? "${widget.message.reference!.content.substring(0, 100)}..."
+                                                  : widget.message.reference!.content,
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    color: Theme.of(context).hintColor,
+                                                  ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             if (!(widget.message.attachments.isNotEmpty &&
                                 widget.message.content.isEmpty))
                               SelectionArea(

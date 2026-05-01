@@ -140,9 +140,10 @@ class _ChannelTextFieldState extends ConsumerState<ChannelTextField> {
               ? pendingAttachments.asMap().entries
                   .map<MultipartFile>((entry) {
                     final bytes = entry.value;
+                    final timestamp = DateTime.now().millisecondsSinceEpoch;
                     return MultipartFile.fromBytes(
                       bytes,
-                      filename: "nebulon_upload.png",
+                      filename: "upload_${timestamp}_${entry.key}.png",
                       contentType: MediaType.parse("image/png"),
                     );
                   })
