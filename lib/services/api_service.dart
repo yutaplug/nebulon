@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
@@ -248,10 +249,19 @@ class ApiService {
         "nonce": nonce,
         if (replyToMessageId != null)
           "message_reference": {"message_id": replyToMessageId.value},
-        "attachments": List.generate(files.length, (i) => {
-          "id": i,
-          "filename": files[i].filename,
-          "content_type": files[i].contentType?.mimeType ?? "application/octet-stream",
+        "attachments": List.generate(files.length, (i) {
+          final bytes = files[i].finalize();
+          final dimensions = _getImageDimensions(bytes);
+          return {
+            "id": i,
+            "filename": files[i].filename,
+            "content_type": files[i].contentType?.mimeType ?? "application/octet-stream",
+            "size": files[i].length,
+            if (dimensions["width"]! > 0 && dimensions["height"]! > 0) ...{
+              "width": dimensions["width"],
+              "height": dimensions["height"],
+            },
+          };
         }),
       };
 
@@ -310,6 +320,49 @@ class ApiService {
 
   Future<void> sendTyping(Snowflake channelId) async {
     await _dio.post("/channels/$channelId/typing");
+  }
+
+  Map<String, int> _getImageDimensions(Uint8List bytes) {
+    if (bytes.length < 24) return {'width': 0, 'height': 0};
+    
+    // PNG dimensions: bytes 16-19 are width, 20-23 are height (big-endian)
+    if (bytes.length >= 24 && 
+        bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) {
+      final width = (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
+      final height = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
+      return {'width': width, 'height': height};
+    }
+    
+    // JPEG dimensions: need to find SOF marker (0xFF 0xC0)
+    if (bytes.length >= 4 && 
+        bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) {
+      int i = 2;
+      while (i < bytes.length - 2) {
+        if (bytes[i] == 0xFF) {
+          final marker = bytes[i + 1];
+          if (marker == 0xC0 || marker == 0xC2) {
+            // SOF0 or SOF2 marker found
+            if (i + 9 < bytes.length) {
+              final height = (bytes[i + 5] << 8) | bytes[i + 6];
+              final width = (bytes[i + 7] << 8) | bytes[i + 8];
+              return {'width': width, 'height': height};
+            }
+          }
+          // Skip to next marker
+          if (i + 3 < bytes.length) {
+            final length = (bytes[i + 2] << 8) | bytes[i + 3];
+            i += length + 2;
+          } else {
+            break;
+          }
+        } else {
+          i++;
+        }
+      }
+    }
+    
+    // Default dimensions if detection fails
+    return {'width': 0, 'height': 0};
   }
 
   void subscribeToGuild(
