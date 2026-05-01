@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:nebulon/models/message.dart';
 import 'package:nebulon/models/user.dart';
 import 'package:nebulon/helpers/cdn_image.dart';
@@ -212,18 +214,62 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                       ),
                       if (!(widget.message.attachments.isNotEmpty &&
                           widget.message.content.isEmpty))
-                        SelectableLinkify(
-                          text: widget.message.content.replaceAllMapped(
-                            RegExp(r'<(https?://[^>]+)>'),
-                            (match) => match.group(1)!,
+                        SelectableText.rich(
+                          TextSpan(
+                            children: linkify(
+                              widget.message.content.replaceAllMapped(
+                                RegExp(r'<(https?://[^>]+)>'),
+                                (match) => match.group(1)!,
+                              ),
+                              linkifiers: const [
+                                MarkdownLinkifier(),
+                                UrlLinkifier(),
+                              ],
+                              options: const LinkifyOptions(humanize: false),
+                            ).map((element) {
+                              if (element is LinkableElement) {
+                                return TextSpan(
+                                  text: element.text,
+                                  style: const TextStyle(
+                                    color: Colors.blueAccent,
+                                  ),
+                                  recognizer:
+                                      TapGestureRecognizer()
+                                        ..onTap = () async {
+                                          if (!await launchUrl(
+                                            Uri.parse(element.url),
+                                          )) {
+                                            // Could not launch URL
+                                          }
+                                        }
+                                        ..onSecondaryTapUp = (details) {
+                                          showMenu(
+                                            context: context,
+                                            position: RelativeRect.fromLTRB(
+                                              details.globalPosition.dx,
+                                              details.globalPosition.dy,
+                                              details.globalPosition.dx,
+                                              details.globalPosition.dy,
+                                            ),
+                                            items: [
+                                              PopupMenuItem(
+                                                child: const Text('Copy Link'),
+                                                onTap: () {
+                                                  Clipboard.setData(
+                                                    ClipboardData(
+                                                      text: element.url,
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                );
+                              }
+                              return TextSpan(text: element.text);
+                            }).toList(),
                           ),
-                          linkifiers: const [MarkdownLinkifier(), UrlLinkifier()],
-                          onOpen: (link) async {
-                            if (!await launchUrl(Uri.parse(link.url))) {
-                              // Could not launch URL
-                            }
-                          },
-                          options: const LinkifyOptions(humanize: false),
                           focusNode: FocusNode(canRequestFocus: false),
                           style: Theme.of(
                             context,
@@ -235,7 +281,6 @@ class _MessageWidgetState extends ConsumerState<MessageWidget>
                                     ? Theme.of(context).hintColor
                                     : null,
                           ),
-                          linkStyle: TextStyle(color: Colors.blueAccent),
                         ),
                       if (widget.message.editedTimestamp != null)
                         Tooltip(
